@@ -3,9 +3,164 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Pocoyize</title>
+    <title>Pocoyize – Pocoyo Studio</title>
+    <style>
+      @font-face {
+        font-family: "DINosaur";
+        src: url("fonts/DINosaur-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "DINosaur";
+        src: url("fonts/DINosaur-Medium.woff2") format("woff2");
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+        --sky-top: #aee3fb;
+        --sky-bottom: #e8f8ff;
+        --pocoyo-blue: #1d9ce5;
+        --sun-yellow: #ffd23f;
+        --grass: #8fd14f;
+        --text: #1b6fa8;
+      }
+
+      #loading-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 22px;
+        background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 78%, var(--grass) 78%, var(--grass) 100%);
+        font-family: "DINosaur", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+        text-align: center;
+        overflow: hidden;
+        transition: opacity 0.6s ease;
+      }
+      #loading-screen.done {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Sun */
+      .sun {
+        width: 74px;
+        height: 74px;
+        border-radius: 50%;
+        background: var(--sun-yellow);
+        box-shadow: 0 0 0 14px rgba(255, 210, 63, 0.35), 0 0 0 28px rgba(255, 210, 63, 0.15);
+        animation: sun-bounce 1.6s ease-in-out infinite;
+      }
+      @keyframes sun-bounce {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50%      { transform: translateY(-12px) scale(1.05); }
+      }
+
+      /* Drifting clouds */
+      .cloud {
+        position: absolute;
+        background: #ffffff;
+        border-radius: 100px;
+        opacity: 0.9;
+        animation: drift linear infinite;
+      }
+      .cloud::before, .cloud::after {
+        content: "";
+        position: absolute;
+        background: #ffffff;
+        border-radius: 50%;
+      }
+      .cloud.c1 { width: 120px; height: 38px; top: 14%; animation-duration: 34s; }
+      .cloud.c1::before { width: 50px; height: 50px; top: -24px; left: 18px; }
+      .cloud.c1::after  { width: 36px; height: 36px; top: -16px; left: 62px; }
+      .cloud.c2 { width: 90px; height: 30px; top: 30%; animation-duration: 46s; animation-delay: -18s; opacity: 0.7; }
+      .cloud.c2::before { width: 38px; height: 38px; top: -18px; left: 14px; }
+      .cloud.c2::after  { width: 28px; height: 28px; top: -12px; left: 46px; }
+      @keyframes drift {
+        from { left: -160px; }
+        to   { left: 110%; }
+      }
+
+      .loading-title {
+        font-weight: 700;
+        font-size: clamp(26px, 5vw, 40px);
+        color: var(--text);
+        margin: 0;
+        letter-spacing: 0.5px;
+      }
+      .loading-sub {
+        font-weight: 500;
+        font-size: clamp(14px, 2.6vw, 17px);
+        color: var(--text);
+        opacity: 0.75;
+        margin: -12px 0 0 0;
+        max-width: 320px;
+        line-height: 1.4;
+      }
+
+      /* Progress bar */
+      .bar-wrap {
+        width: min(320px, 72vw);
+        height: 26px;
+        background: rgba(255, 255, 255, 0.85);
+        border: 3px solid #ffffff;
+        border-radius: 999px;
+        box-shadow: inset 0 2px 6px rgba(29, 156, 229, 0.18);
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: repeating-linear-gradient(
+          45deg,
+          var(--pocoyo-blue) 0 14px,
+          #4cb4ee 14px 28px
+        );
+        background-size: 200% 100%;
+        animation: candy 1.2s linear infinite;
+        transition: width 0.3s ease;
+      }
+      @keyframes candy {
+        from { background-position: 0 0; }
+        to   { background-position: 40px 0; }
+      }
+      .pct {
+        font-weight: 700;
+        font-size: 20px;
+        color: var(--text);
+        margin: -8px 0 0 0;
+      }
+
+      .loading-error {
+        display: none;
+        color: #c0392b;
+        font-weight: 500;
+        max-width: 320px;
+        line-height: 1.4;
+      }
+    </style>
   </head>
   <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+
+    <div id="loading-screen">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="sun"></div>
+      <h1 class="loading-title">Pocoyize</h1>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill"></div></div>
+      <p class="pct" id="pct">0%</p>
+      <p class="loading-sub" id="loading-sub">Loading the fun&hellip; &middot; Cargando la diversi&oacute;n&hellip;</p>
+      <p class="loading-error" id="loading-error">Oops! Something went wrong. Please refresh the page to try again.<br>&iexcl;Ups! Algo sali&oacute; mal. Actualiza la p&aacute;gina para volver a intentarlo.</p>
+    </div>
+
     <canvas id="unity-canvas" width=960 height=540 tabindex="-1" style="width: 960px; height: 540px; background: #231F20"></canvas>
     <script src="Build/Builds.loader.js"></script>
     <script>
@@ -22,8 +177,12 @@
         canvas.style.position = "fixed";
 
         document.body.style.textAlign = "left";
-
       }
+
+      var barFill = document.getElementById("bar-fill");
+      var pct = document.getElementById("pct");
+      var sub = document.getElementById("loading-sub");
+      var loadingScreen = document.getElementById("loading-screen");
 
       createUnityInstance(document.querySelector("#unity-canvas"), {
         arguments: [],
@@ -36,9 +195,23 @@
         productVersion: "1.0",
         // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
         // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
-      }).then((unityInstance) => {
-      }).catch((message) => {
-        alert(message);
+      }, function (progress) {
+        // Unity reports download progress from 0 to ~0.9, then finishes setup.
+        var shown = Math.min(Math.round(progress * 100), 99);
+        barFill.style.width = shown + "%";
+        pct.textContent = shown + "%";
+        if (shown >= 88) {
+          sub.innerHTML = "Almost there&hellip; &middot; Ya casi&hellip;";
+        }
+      }).then(function (unityInstance) {
+        barFill.style.width = "100%";
+        pct.textContent = "100%";
+        loadingScreen.classList.add("done");
+        setTimeout(function () { loadingScreen.remove(); }, 700);
+      }).catch(function (message) {
+        document.getElementById("loading-error").style.display = "block";
+        sub.style.display = "none";
+        console.error(message);
       });
     </script>
   </body>
